@@ -1,45 +1,50 @@
-from fastapi import APIRouter
+import os
+from fastapi import APIRouter, UploadFile, File
+from supabase import create_client
 
 router = APIRouter(prefix="/api")
 
-users = {}
-snaps = []
+supabase = create_client(
+    os.getenv("SUPABASE_URL",""),
+    os.getenv("SUPABASE_KEY","")
+)
 
 @router.post("/register")
-def register(username: str, email: str, password: str):
-    users[username] = {
+def register(email: str, password: str):
+    result = supabase.auth.sign_up({
         "email": email,
         "password": password
-    }
-    return {"created": True, "username": username}
+    })
+    return result.model_dump() if hasattr(result, "model_dump") else result
 
 @router.post("/login")
-def login(username: str, password: str):
-    if username in users and users[username]["password"] == password:
-        return {"token": "demo-token", "username": username}
-    return {"error": "invalid login"}
-
-@router.get("/me")
-def me(username: str):
-    return users.get(username, {})
+def login(email: str, password: str):
+    result = supabase.auth.sign_in_with_password({
+        "email": email,
+        "password": password
+    })
+    return result.model_dump() if hasattr(result, "model_dump") else result
 
 @router.post("/snaps/send")
-def send_snap(sender: str, receiver: str, media_url: str, caption: str = ""):
-    snap = {
-        "sender": sender,
-        "receiver": receiver,
+def send_snap(sender_id: str, receiver_id: str, media_url: str, caption: str=""):
+    result = supabase.table("snaps").insert({
+        "sender_id": sender_id,
+        "receiver_id": receiver_id,
         "media_url": media_url,
-        "caption": caption,
-        "opened": False
-    }
-    snaps.append(snap)
-    return snap
+        "caption": caption
+    }).execute()
+    return result.data
 
-@router.get("/snaps/inbox")
-def inbox(username: str):
-    return [s for s in snaps if s["receiver"] == username]
+@router.get("/snaps/inbox/{user_id}")
+def inbox(user_id: str):
+    result = supabase.table("snaps").select("*").eq(
+        "receiver_id", user_id
+    ).execute()
+    return result.data
 
-@router.post("/snaps/open")
-def open_snap(index: int):
-    snaps[index]["opened"] = True
-    return snaps[index]
+@router.post("/upload")
+async def upload(file: UploadFile = File(...)):
+    data = await file.read()
+    path = f"uploads/{file.filename}"
+    result = supabase.storage.from_("media").upload(path, data)
+    return {"path": path, "result": str(result)}

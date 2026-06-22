@@ -1,10 +1,9 @@
 from fastapi import FastAPI
-from .routes import router
+from app.routes import router
 
-app = FastAPI(title="reSnap API")
-
+app = FastAPI(title="reSnap Supabase Backend")
 app.include_router(router)
 
 @app.get("/")
 def root():
-    return {"status": "reSnap backend online"}
+    return {"status":"reSnap Supabase backend online"}

@@ -1,23 +1,31 @@
-# reSnap Backend
+# reSnap Supabase Backend
 
-Simple FastAPI backend starter.
+Features:
+- Supabase Auth
+- PostgreSQL tables
+- Storage uploads
+- Snaps API
+- Message-ready database
 
-Run locally:
+Setup:
+1. Create Supabase project
+2. Run schema.sql in SQL editor
+3. Create a Storage bucket called:
+
+media
+
+4. Add environment variables:
+
+SUPABASE_URL=your_url
+SUPABASE_KEY=your_key
+
+Run:
 
 pip install -r requirements.txt
 
 uvicorn app.main:app --reload
 
-API:
-GET /
-POST /api/register
-POST /api/login
-POST /api/snaps/send
-GET /api/snaps/inbox
-
-For Railway:
-- create a new service
-- deploy this repo
-- start command:
-
-uvicorn app.main:app --host 0.0.0.0 --port $PORT
+Deploy anywhere:
+- Render
+- Fly.io
+- VPS
